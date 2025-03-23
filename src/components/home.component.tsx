@@ -1,5 +1,9 @@
 import { CardComponent } from "./card.component";
 
-export const HomeComponent = () => {
-  return <CardComponent></CardComponent>;
+interface Props {
+  Id: string;
+}
+
+export const HomeComponent = ({ Id }: Props) => {
+  return <CardComponent Id={Id}>Home</CardComponent>;
 };

@@ -1,5 +1,14 @@
 import { CardComponent } from "./card.component";
 
-export const ProjectComponent = () => {
-  return <CardComponent></CardComponent>;
+interface Props {
+  Id: string;
+  Repository: string;
+}
+
+export const ProjectComponent = ({ Id, Repository }: Props) => {
+  return (
+    <CardComponent Id={Id}>
+      Projeto {Repository.split("/").pop() || ""}
+    </CardComponent>
+  );
 };
