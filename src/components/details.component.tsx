@@ -1,4 +1,5 @@
-import { IProfileData } from "..";
+import { useTranslation } from "react-i18next";
+import { IProfileData } from "../@types";
 import { CardComponent } from "./card.component";
 
 interface Props {
@@ -7,13 +8,15 @@ interface Props {
 }
 
 export const DetailsComponent = ({ Id, ProfileData }: Props) => {
+  const { t } = useTranslation("DETAILS");
+
   return (
     <CardComponent Id={Id} ClassName={`grid grid-cols-2 gap-8`}>
       <div className={`flex h-full flex-col gap-10`}>
         <h1
           className={`col-span-2 border-b-2 pb-2 text-center text-2xl font-bold`}
         >
-          Education
+          {t("education")}
         </h1>
         <div className={`flex h-full flex-col gap-8`}>
           {ProfileData.education.map((e, i) => (
@@ -32,7 +35,7 @@ export const DetailsComponent = ({ Id, ProfileData }: Props) => {
         <h1
           className={`col-span-2 border-b-2 pb-2 text-center text-2xl font-bold`}
         >
-          Experience
+          {t("experience")}
         </h1>
         <div className={`flex h-full flex-col gap-8`}>
           {ProfileData.experience.map((e, i) => (

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { IProfileData, IRepositoryData } from ".";
+import { IProfileData, IRepositoryData } from "./@types";
 import { DetailsComponent } from "./components/details.component";
 import { HomeComponent } from "./components/home.component";
 import { ProjectComponent } from "./components/project.component";
@@ -169,7 +169,7 @@ export const AppComponent = () => {
         className={`fixed bottom-8 left-[50%] flex h-fit w-fit translate-x-[-50%] items-center justify-center gap-4 rounded`}
       >
         <div
-          className={`bg-text-secondary flex items-center justify-center rounded`}
+          className={`bg-bg-navbar flex items-center justify-center rounded`}
         >
           <button
             className={`group flex h-10 w-10 cursor-pointer items-center justify-center rounded-full p-2`}
@@ -212,7 +212,7 @@ export const AppComponent = () => {
           </button>
         </div>
         <div
-          className={`bg-text-secondary flex items-center justify-center gap-4 rounded p-2`}
+          className={`bg-bg-navbar flex items-center justify-center gap-4 rounded p-2`}
         >
           <NavButton Target="details">
             <svg
@@ -249,7 +249,7 @@ export const AppComponent = () => {
           </NavButton>
         </div>
         <div
-          className={`bg-text-secondary flex items-center justify-center rounded`}
+          className={`bg-bg-navbar flex items-center justify-center rounded`}
         >
           <button
             className={`group flex h-10 w-10 cursor-pointer items-center justify-center rounded-full p-2`}
@@ -288,7 +288,12 @@ export const AppComponent = () => {
       {/* <---------------------------------------------------------- Navbar */}
       {/* <----------------------------------------------------------- Cards */}
       <DetailsComponent Id={`details`} ProfileData={profileData} />
-      <HomeComponent Id={`home`} ProfileData={profileData} />
+      <HomeComponent
+        Id={`home`}
+        ProfileData={profileData}
+        RepositoryData={repositoryData}
+        GoToSection={goToSection}
+      />
       {profileData.projectRepositories.map((repository, i) => (
         <ProjectComponent
           Repository={repositoryData[i]}

@@ -1,23 +1,106 @@
-import { IProfileData } from "..";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { IProfileData, IRepositoryData, ISkill } from "../@types";
 import { CardComponent } from "./card.component";
 
 interface Props {
   Id: string;
   ProfileData: IProfileData;
+  RepositoryData: Array<IRepositoryData>;
+  GoToSection: (section: string) => void;
 }
 
-export const HomeComponent = ({ Id, ProfileData }: Props) => {
+interface IProjectSearchResults {
+  id: string;
+  name: string;
+  skills: Array<ISkill>;
+}
+
+export const HomeComponent = ({
+  Id,
+  ProfileData,
+  RepositoryData,
+  GoToSection,
+}: Props) => {
+  const [selectedSkills, setSelectedSkills] = useState<Set<ISkill>>(new Set());
+  const [projectSearch, setProjectSearch] = useState<string>("");
+  const [projectSearchResults, setProjectSearchResults] = useState<
+    Array<IProjectSearchResults>
+  >([]);
+
+  const projectSearchResultsContainerRef = useRef<HTMLDivElement>(null);
+
+  const { t } = useTranslation("HOME");
+
+  const normalizeString = (s: string): string =>
+    s
+      .toLowerCase()
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const changeSelectedSkills = (skill: ISkill) => {
+    if (selectedSkills.size >= 10 && !selectedSkills.has(skill)) return;
+
+    const newSelectedSkills = new Set(selectedSkills);
+
+    if (newSelectedSkills.has(skill)) newSelectedSkills.delete(skill);
+    else newSelectedSkills.add(skill);
+
+    setSelectedSkills(newSelectedSkills);
+  };
+
+  const handleScroll = (direction: "up" | "down") => {
+    const container = projectSearchResultsContainerRef.current;
+
+    if (!container) return;
+
+    const scrollAmount = 100;
+
+    if (direction === "up") {
+      container.scrollBy({
+        top: -scrollAmount,
+        behavior: "smooth",
+      });
+    } else {
+      container.scrollBy({
+        top: +scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  useEffect(() => {
+    const filteredProjects = RepositoryData.filter(
+      (project) =>
+        normalizeString(project.name).includes(
+          normalizeString(projectSearch),
+        ) &&
+        Array.from(selectedSkills)
+          .map((m) => m.name)
+          .every((e) => project.skills.map((m) => m.name).includes(e)),
+    );
+
+    setProjectSearchResults(
+      filteredProjects.map((project, index) => ({
+        id: ProfileData.projectRepositories[index].repository,
+        name: project.name,
+        skills: project.skills,
+      })),
+    );
+  }, [RepositoryData, projectSearch, selectedSkills, ProfileData]);
+
   return (
     <CardComponent
       Id={Id}
-      ClassName="grid grid-cols-[0.5fr_1fr] grid-rows-[1fr_auto] gap-8"
+      ClassName="grid grid-cols-[0.5fr_1fr] grid-rows-[auto_auto_1fr] gap-8"
     >
       {/* <---------------------------------------------------------- Avatar */}
-      <div className="row-span-2 flex h-full w-full flex-col items-center gap-4">
+      <div className="row-span-3 flex h-full w-full flex-col items-center gap-4">
         <img
           src={ProfileData.avatar}
           alt="Profile Picture"
-          className="aspect-square w-full rounded-full"
+          className="aspect-square max-h-[296px] w-auto rounded-full"
         />
         <div className="flex flex-col items-center gap-2">
           <h2 className="text-2xl font-bold">{ProfileData.name}</h2>
@@ -81,14 +164,14 @@ export const HomeComponent = ({ Id, ProfileData }: Props) => {
       {/* <---------------------------------------------------------- Avatar */}
       {/* <------------------------------------------------------------- Bio */}
       <div className="flex flex-col">
-        <h1 className="text-2xl font-bold">Biography</h1>
+        <h1 className="text-2xl font-bold">{t("biography")}</h1>
         <hr className="border-highlight mt-3 mb-6 rounded border-t-[3px]" />
         <p className={`text-justify`}>{ProfileData.bio}</p>
       </div>
       {/* <------------------------------------------------------------- Bio */}
       {/* <---------------------------------------------------------- Skills */}
       <div className="flex flex-col">
-        <h2 className="text-2xl font-bold">Skills</h2>
+        <h2 className="text-2xl font-bold">{t("skills")}</h2>
         <hr className="border-highlight mt-3 mb-6 rounded border-t-[3px]" />
         <div className={`flex flex-wrap items-center gap-4`}>
           {ProfileData.skills.map((skill, index) => (
@@ -96,12 +179,83 @@ export const HomeComponent = ({ Id, ProfileData }: Props) => {
               key={index}
               src={skill.url}
               alt={skill.name}
-              className="h-10 w-10 cursor-pointer"
+              className={`h-10 w-10 cursor-pointer rounded-[3px] p-[3px] ${
+                skill.backgroundColor === "light"
+                  ? "bg-skill-light"
+                  : skill.backgroundColor === "dark"
+                    ? "bg-skill-dark"
+                    : ""
+              }`}
+              onClick={() => changeSelectedSkills(skill)}
             />
           ))}
         </div>
       </div>
       {/* <---------------------------------------------------------- Skills */}
+      {/* <-------------------------------------------------- Project Search */}
+      <div className="flex h-full flex-col overflow-hidden">
+        <h2 className="text-2xl font-bold">{t("project-search")}</h2>
+        <hr className="border-highlight mt-3 mb-6 rounded border-t-[3px]" />
+        <div className="grid h-full max-h-full grid-cols-[0.5fr_1fr] grid-rows-[auto_1fr] gap-2 overflow-hidden">
+          <input
+            className="bg-bg-tertiary border-highlight focus:border-text-primary rounded border p-2 focus:outline-none"
+            id="search"
+            name="search"
+            onChange={(e) => setProjectSearch(e.target.value)}
+            placeholder={t("search-for-projects")}
+            type="search"
+            value={projectSearch}
+          />
+          <div className="border-highlight row-span-2 flex h-full w-full gap-2 rounded border p-2">
+            <div
+              className="scrollbar-hidden flex h-full w-full snap-y snap-mandatory flex-col gap-2 overflow-y-scroll"
+              ref={projectSearchResultsContainerRef}
+            >
+              {projectSearchResults.length === 0 ? (
+                <p className="m-auto text-center">{t("no-projects-found")}</p>
+              ) : null}
+              {projectSearchResults.map((project, index) => (
+                <a
+                  className="bg-bg-tertiary cursor-pointer snap-start p-2 font-semibold"
+                  key={index}
+                  onClick={() => GoToSection(project.id)}
+                >
+                  {project.name}
+                </a>
+              ))}
+            </div>
+            <div className="flex w-6 flex-col justify-between">
+              <button
+                className="bg-bg-navbar flex h-6 w-full cursor-pointer items-center justify-center rounded-[3px]"
+                onClick={() => handleScroll("up")}
+              >
+                <div className="h-0 w-0 border-t-0 border-r-[5px] border-b-[10px] border-l-[5px] border-transparent border-b-[#000]"></div>
+              </button>
+              <button
+                className="bg-bg-navbar flex h-6 w-full cursor-pointer items-center justify-center rounded-[3px]"
+                onClick={() => handleScroll("down")}
+              >
+                <div className="h-0 w-0 border-t-[10px] border-r-[5px] border-b-0 border-l-[5px] border-transparent border-t-[#000]"></div>
+              </button>
+            </div>
+          </div>
+          <div className="border-highlight bg-bg-tertiary flex w-full flex-wrap gap-2 rounded border p-2">
+            {Array.from(selectedSkills).length === 0 ? (
+              <p className="m-auto text-center">{t("click-on-skill")}</p>
+            ) : null}
+            {Array.from(selectedSkills).map((skill, index) => (
+              <img
+                alt={skill.name}
+                className={`h-8 w-8 cursor-pointer rounded-[3px] p-[3px] ${skill.backgroundColor ? `bg-skill-${skill.backgroundColor}` : ""}`}
+                key={index}
+                onClick={() => changeSelectedSkills(skill)}
+                src={skill.url}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+      {/* <-------------------------------------------------- Project Search */}
     </CardComponent>
   );
 };

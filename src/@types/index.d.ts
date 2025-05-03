@@ -29,6 +29,7 @@ export interface IEducation {
 export interface ISkill {
   name: string;
   url: string;
+  backgroundColor?: "light" | "dark";
 }
 
 export interface IProjectRepository {
